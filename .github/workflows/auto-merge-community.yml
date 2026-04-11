@@ -1,0 +1,109 @@
+name: Auto-merge community data
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+    branches: [main]
+
+# WHY pull_request_target instead of pull_request:
+#
+# pull_request_target runs in the BASE repo's context with a full
+# GITHUB_TOKEN, instead of the read-only token GitHub forces on
+# pull_request workflows triggered from external forks. That fork-token
+# restriction is hardcoded — no YAML permissions block or repo setting
+# can override it — and it would otherwise cause "gh pr merge" to fail
+# with "Resource not accessible by integration" for every external
+# community contribution.
+#
+# pull_request_target is dangerous IF the workflow executes PR code,
+# because that code would run with elevated permissions. THIS workflow
+# is safe under pull_request_target because it never touches PR file
+# contents:
+#   - it gets the changed file LIST via the GitHub API (gh pr diff
+#     --name-only), not by checking out the PR head
+#   - it validates paths with grep
+#   - it calls gh pr merge
+# There is no actions/checkout, no install, no build, no script
+# execution from the PR. Nothing the contributor controls can run.
+#
+# This is the durable solution: no PAT, no rotation, no expiration.
+# secrets.GITHUB_TOKEN is provided by GitHub on every workflow run
+# and lasts as long as the repo and GitHub Actions exist.
+#
+# Path validation gates:
+#
+#   1. Branch name MUST start with "community/data/" — translation PRs
+#      that use other branch names (e.g. "contrib/{user}/...") never
+#      enter this workflow at all and require manual merge.
+#
+#   2. Every changed file MUST match one of the allowed regexes below.
+#      Canonical translation paths (xml-open-t/...) are NOT in any
+#      allowlist — a contributor can never auto-merge changes to
+#      canonical translations, only to their own personal community
+#      files. Canonical translation contributions always require manual
+#      review and merge by a maintainer.
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  verify-and-merge:
+    if: startsWith(github.head_ref, 'community/data/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify only per-user community files changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          echo "PR author: $AUTHOR"
+
+          # Get the list of changed files via the GitHub API.
+          # We never download or check out PR file contents — only paths.
+          CHANGED=$(gh pr diff "$PR_NUM" --name-only --repo "$GITHUB_REPOSITORY")
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          VIOLATION=""
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+
+            # Allow .gitattributes (merge strategy config)
+            if [ "$file" = ".gitattributes" ]; then
+              continue
+            fi
+
+            # Allow community/{category}/{author}.jsonl or .json
+            if echo "$file" | grep -qE "^community/[^/]+/${AUTHOR}\.(jsonl|json)$"; then
+              continue
+            fi
+
+            # Allow personal translation XMLs under the author's translation tree.
+            # The .+ matches both CBETA-style ("T/T48/T48n2005.xml") and
+            # OpenZen-style ("ws/gateless-barrier/gateless-barrier.xml") layouts.
+            if echo "$file" | grep -qE "^community/translations/${AUTHOR}/.+\.xml$"; then
+              continue
+            fi
+
+            # Allow shared community files that use merge=union
+            if echo "$file" | grep -qE "^(translation-memory\.approved\.jsonl|termbase\.json|scholar-collections\.json|translation-review\.jsonl)$"; then
+              continue
+            fi
+
+            VIOLATION="$VIOLATION\n  $file"
+          done <<< "$CHANGED"
+
+          if [ -n "$VIOLATION" ]; then
+            echo "::error::PR modifies files outside allowed community paths:$VIOLATION"
+            exit 1
+          fi
+
+          echo "All changed files are within allowed community paths."
+
+      - name: Auto-merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR_NUM" --merge --auto --repo "$GITHUB_REPOSITORY"
