@@ -28,7 +28,7 @@ README.md                          ← this file
 The directory structure mirrors [Fabulu/CbetaZenTranslations](https://github.com/Fabulu/CbetaZenTranslations) so the [Read Zen](https://github.com/Fabulu/ReadZen) desktop app can read either repository with the same code path. The differences are:
 
 - The XML originals folder is `xml-open-t/` (not `xml-p5t/`) to make accidental cross-cloning impossible
-- File identifiers use the OpenZenTexts scheme (e.g. `ws.gateless-barrier`) rather than CBETA's (e.g. `T48n2005`)
+- File identifiers use the OpenZen scheme (e.g. `ws.gateless-barrier`) rather than CBETA's (e.g. `T48n2005`)
 - License terms are **commercial-reuse-permitted** by design — see [`LICENSE.md`](LICENSE.md)
 
 ## Companion repositories

@@ -6,7 +6,7 @@ This repository contains translations and community work derived from the [OpenZ
 
 ## Translation XML files (`xml-open-t/`)
 
-Translations of OpenZenTexts originals. Contributors are strongly encouraged to release translations under one of these permissive licenses to keep the collection commercially reusable end-to-end:
+Translations of OpenZen originals. Contributors are strongly encouraged to release translations under one of these permissive licenses to keep the collection commercially reusable end-to-end:
 
 - **CC BY 4.0** ([https://creativecommons.org/licenses/by/4.0/](https://creativecommons.org/licenses/by/4.0/)) — preferred for new translations. Allows commercial use; requires attribution.
 - **CC0** ([https://creativecommons.org/publicdomain/zero/1.0/](https://creativecommons.org/publicdomain/zero/1.0/)) — for translators who want to release into the public domain.
