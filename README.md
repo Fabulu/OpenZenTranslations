@@ -1,6 +1,6 @@
 # OpenZenTranslations
 
-Translations and community work derived from the [OpenZenTexts](https://github.com/Fabulu/OpenZenTexts) collection of free-licensed Chinese Chan/Zen primary texts.
+Translations and community work derived from the [OpenZenTexts](https://github.com/Fabulu/OpenZenTexts) collection of free-licensed Chinese Zen primary texts.
 
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20this%20project-ff5e5b?logo=ko-fi&logoColor=white)](https://ko-fi.com/readzen)
 
